@@ -4,50 +4,18 @@
 #include <stdlib.h>
 #include <string.h>
 #include "backend.h"
+#include "authenticate.h"
 
 #define FILENAME "cycle_data.txt"
 #define KEY "secret" // key for XOR encryption
-
-
-int is_leap_year(int year) {
-    return (year % 4 == 0 && (year % 100 != 0 || year % 400 == 0));
-}
-
-int validate_date(const char *date) {
-    int year, month, day;
-    
-    if (strlen(date) != 10 || date[4] != '-' || date[7] != '-') {
-        printf("Invalid format......!\n");
-        return 0;  // Invalid format
-    }
-    
-    if (sscanf(date, "%d-%d-%d", &year, &month, &day) != 3) {
-        printf("Invalid...... seperate the date with -\n");
-        return 0;  
-    }
-
-    if (month < 1 || month > 12) {
-        printf("Invalid month......\n");
-        return 0;  
-    }
-
-    int days_in_month[] = {31, (is_leap_year(year) ? 29 : 28), 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
-    
-    if (day < 1 || day > days_in_month[month - 1]) {
-        printf("Invalid day......\n");
-        return 0;  
-    }
-
-    return 1;  
-}
-
+#define MAX 456
 
 
 int main() 
 {
     char last_period[11], next_period[11], fertile_start[11], fertile_end[11];
     int cycle_length;
-    char buffer[256];
+    char buffer[MAX];
     char saved_last_period[11];
     int saved_cycle_length;
 
@@ -121,10 +89,7 @@ int main()
             case 2:
 
                 // Load the cycle data from the file
-                if (!load_cycle_data(FILENAME, buffer, sizeof(buffer))) {
-                    printf("No cycle records found. Please log your period first.\n");
-                    break;
-                }
+                load_last_period(FILENAME, buffer, sizeof(buffer));
             
                 // Extract the last period date and cycle length from the saved data
                 if (sscanf(buffer, "Last Period: %10s, Cycle Length: %d", saved_last_period, &saved_cycle_length) != 2) {
@@ -132,8 +97,11 @@ int main()
                     break;
                 }
 
+                int average_length = average_cycle_length(FILENAME);
+                printf("Average cycle length: %d days\n", average_length);
+
                 // Calculate the next period and fertile window
-                calculate_next_period(saved_last_period, saved_cycle_length, next_period);
+                calculate_next_period(saved_last_period, average_length, next_period);
                 calculate_fertile_window(next_period, fertile_start, fertile_end);
             
                 // Display the predictions
