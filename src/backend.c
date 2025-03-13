@@ -121,12 +121,10 @@ int average_cycle_length(const char *filename)
     fclose(fp);
 
     return count > 0 ? sum / count : 0;
-
-    
 }
 
 // Function to load cycle data from a file
-int load_cycle_data(const char *filename, char *buffer, size_t buffer_size) {
+void load_cycle_data(const char *filename, char *buffer, size_t buffer_size) {
     FILE *file = fopen(filename, "r");
     if (file) {
         fread(buffer, sizeof(char), buffer_size, file);
@@ -134,18 +132,4 @@ int load_cycle_data(const char *filename, char *buffer, size_t buffer_size) {
     } else {
         perror("Error opening file");
     }
-}
-
-// Simple XOR encryption
-void encrypt_data(const char *input, char *output, const char *key) {
-    size_t key_length = strlen(key);
-    for (size_t i = 0; i < strlen(input); i++) {
-        output[i] = input[i] ^ key[i % key_length];
-    }
-    output[strlen(input)] = '\0'; // Null-terminate the output
-}
-
-// Simple XOR decryption (same as encryption)
-void decrypt_data(const char *input, char *output, const char *key) {
-    encrypt_data(input, output, key); // XOR encryption and decryption are the same
 }

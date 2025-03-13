@@ -1,37 +1,61 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "backend.h"
+#include "authenticate.h"
 
-int is_leap_year(int year) {
-    return (year % 4 == 0 && (year % 100 != 0 || year % 400 == 0));
+#define MAX_USERS 100
+#define FILENAME "users.txt"
+#define KEY "secret"
+
+// Simple XOR encryption
+void encrypt_data(const char *input, char *output, const char *key) {
+    size_t key_length = strlen(key);
+    for (size_t i = 0; i < strlen(input); i++) {
+        output[i] = input[i] ^ key[i % key_length];
+    }
+    output[strlen(input)] = '\0'; // Null-terminate the output
 }
 
-int validate_date(const char *date) {
-    int year, month, day;
-    
-    if (strlen(date) != 10 || date[4] != '-' || date[7] != '-') {
-        printf("Invalid format......!\n");
-        return 0;  // Invalid format
-    }
-    
-    if (sscanf(date, "%d-%d-%d", &year, &month, &day) != 3) {
-        printf("Invalid...... seperate the date with -\n");
-        return 0;  
-    }
-
-    if (month < 1 || month > 12) {
-        printf("Invalid month......\n");
-        return 0;  
-    }
-
-    int days_in_month[] = {31, (is_leap_year(year) ? 29 : 28), 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
-    
-    if (day < 1 || day > days_in_month[month - 1]) {
-        printf("Invalid day......\n");
-        return 0;  
-    }
-
-    return 1;  
+// Decryption is same as encryption
+void decrypt_data(const char *input, char *output, const char *key) {
+    encrypt_data(input, output, key);
 }
 
+// Function to register a new user
+int register_user(const char *username, const char *password) {
+    FILE *file = fopen(FILENAME, "a");
+    if (!file) {
+        perror("Error opening file");
+        return 0;
+    }
+
+    char encrypted_pass[100];
+    encrypt_data(password, encrypted_pass, KEY);
+
+    fprintf(file, "%s %s\n", username, encrypted_pass);
+    fclose(file);
+    return 1;
+}
+
+// Function to authenticate user login
+int authenticate_user(const char *username, const char *password) {
+    FILE *file = fopen(FILENAME, "r");
+    if (!file) {
+        perror("Error opening file");
+        return 0;
+    }
+
+    char stored_user[100], stored_pass[100], decrypted_pass[100];
+    char encrypted_pass[100];
+    encrypt_data(password, encrypted_pass, KEY);
+
+    while (fscanf(file, "%s %s", stored_user, stored_pass) == 2) {
+        decrypt_data(stored_pass, decrypted_pass, KEY);
+        if (strcmp(stored_user, username) == 0 && strcmp(decrypted_pass, password) == 0) {
+            fclose(file);
+            return 1; // Authentication successful
+        }
+    }
+    fclose(file);
+    return 0; // Authentication failed
+}
