@@ -1,7 +1,7 @@
 //page3.h
 
-#ifndef PAGE_H
-#define PAGE_H
+#ifndef PAGE3_INSIGHTS_H
+#define PAGE3_INSIGHTS_H
 
 void Draw_Insight();
 

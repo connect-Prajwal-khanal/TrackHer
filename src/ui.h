@@ -17,6 +17,7 @@ typedef struct TextBox {
 void DrawTextBox(TextBox *textbox);
 void HandleTextBoxInput(TextBox *textbox);
 void DrawButton(Rectangle rect, const char *text);
+void back_DrawButton(Rectangle rect, const char *text);
 
 // Function declarations for Calendar
 void DrawCalendar(int year, int month);

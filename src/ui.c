@@ -4,9 +4,14 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include "page2_choice.h"
+
+extern ScreenType currentScreen;
 
 #define LIGHTBLUE (Color){135, 206, 250, 255}  
 #define LIGHTGREEN (Color){144, 238, 144, 255} 
+#define LIGHTORANGE (Color){255, 200, 150, 255}   // Soft peachy-orange
+#define DARKORANGE  (Color){255, 140, 0, 255}     // Deeper burnt orange
 #define MAX_TEXT_INPUT_LENGTH 100
 
 typedef struct TextBox {
@@ -50,6 +55,11 @@ void HandleTextBoxInput(TextBox *textbox) {
 
 void DrawButton(Rectangle rect, const char *text) {
     Color buttonColor = CheckCollisionPointRec(GetMousePosition(), rect) ? LIGHTBLUE : DARKBLUE;
+    DrawRectangleRec(rect, buttonColor);
+    DrawText(text, rect.x + 10, rect.y + 10, 20, WHITE);
+}
+void back_DrawButton(Rectangle rect, const char *text) {
+    Color buttonColor = CheckCollisionPointRec(GetMousePosition(), rect) ? LIGHTORANGE : DARKORANGE;
     DrawRectangleRec(rect, buttonColor);
     DrawText(text, rect.x + 10, rect.y + 10, 20, WHITE);
 }
@@ -174,5 +184,13 @@ void DrawPeriodTrackerUI() {
 
     if (CheckCollisionPointRec(GetMousePosition(), log_period_button) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
         SavePeriodData();
+    }
+
+    // Back Button
+    Rectangle back_button = {20, 20, 100, 40};
+    back_DrawButton(back_button, "< Back");
+
+    if (CheckCollisionPointRec(GetMousePosition(), back_button) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+        currentScreen = PAGE2;  // Switch screen back to choice page
     }
 }
