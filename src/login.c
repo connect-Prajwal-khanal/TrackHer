@@ -8,6 +8,7 @@
 #define TAB 9
 #define BCKSPC 8
 
+// Function to take password input
 void takepassword(char pwd[50]) {
     int i = 0;
     char ch;
@@ -28,18 +29,21 @@ void takepassword(char pwd[50]) {
     }
 }
 
+// Function to take input (full name, email, etc.)
 void takeinput(char ch[50]) {
     fgets(ch, 50, stdin);
     ch[strlen(ch) - 1] = 0;
 }
 
-char generateUsername(char email[50], char username[50]) {
+// Function to generate username based on email (before '@' symbol)
+void generateUsername(char email[50], char username[50]) {
     for (int i = 0; i < strlen(email); i++) {
         if (email[i] == '@') break;
         else username[i] = email[i];
     }
 }
 
+// Signup function
 void signup() {
     FILE *fp;
     struct user user;
@@ -75,6 +79,7 @@ void signup() {
     }
 }
 
+// Authentication function (to log in)
 int authenticate(char username[50], char password[50]) {
     FILE *fp;
     struct user usr;

@@ -1,161 +1,178 @@
-#include <gtk/gtk.h>
+#include "raylib.h"
 #include "backend.h"
-#include "login.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
 
-// Global widgets
-GtkWidget *window;
-GtkWidget *calendar;
-GtkWidget *entry_cycle_length;
-GtkWidget *label_next_period;
-GtkWidget *label_fertile_window;
-GtkWidget *text_view_history;
-GtkWidget *username_entry;
-GtkWidget *password_entry;
+#define LIGHTBLUE (Color){135, 206, 250, 255}  
+#define LIGHTGREEN (Color){144, 238, 144, 255} 
+#define MAX_TEXT_INPUT_LENGTH 100
 
+typedef struct TextBox {
+    Rectangle bounds;
+    char text[MAX_TEXT_INPUT_LENGTH];
+    bool is_active;
+} TextBox;
 
-// Function to handle "Calculate" button
-void on_Log_period_clicked(GtkWidget *widget, gpointer data) {
-    guint year, month, day;
-    gtk_calendar_get_date(GTK_CALENDAR(calendar), &year, &month, &day);
-    month += 1; // Adjust month (GTK Calendar month is 0-based)
-    char last_period[11];
-    snprintf(last_period, sizeof(last_period), "%04d-%02d-%02d", year, month, day);
+TextBox cycle_length_textbox = {0};
+char cycle_data[100] = "Cycle Data: ";
+int selected_day = -1;
 
-    int cycle_length = atoi(gtk_entry_get_text(GTK_ENTRY(entry_cycle_length)));
-    if (cycle_length < 21 || cycle_length > 35) {
-        gtk_label_set_text(GTK_LABEL(label_next_period), "Invalid cycle length!");
+// Calendar month/year (dynamic)
+int currentMonth = 3;  // Default start month
+int currentYear = 2025; // Default start year
+
+void DrawTextBox(TextBox *textbox) {
+    DrawRectangleRec(textbox->bounds, textbox->is_active ? LIGHTGRAY : DARKGRAY);
+    DrawText(textbox->text, textbox->bounds.x + 5, textbox->bounds.y + 5, 20, textbox->is_active ? BLACK : WHITE);
+}
+
+void HandleTextBoxInput(TextBox *textbox) {
+    if (textbox->is_active) {
+        int key = GetCharPressed();
+        while (key > 0) {
+            int len = strlen(textbox->text);
+            if (len < MAX_TEXT_INPUT_LENGTH - 1) {
+                textbox->text[len] = (char)key;
+                textbox->text[len + 1] = '\0';
+            }
+            key = GetCharPressed();
+        }
+        if (IsKeyPressed(KEY_BACKSPACE) && strlen(textbox->text) > 0) {
+            textbox->text[strlen(textbox->text) - 1] = '\0';
+        }
+        if (IsKeyPressed(KEY_ENTER)) {
+            textbox->is_active = false;
+        }
+    }
+}
+
+void DrawButton(Rectangle rect, const char *text) {
+    Color buttonColor = CheckCollisionPointRec(GetMousePosition(), rect) ? LIGHTBLUE : DARKBLUE;
+    DrawRectangleRec(rect, buttonColor);
+    DrawText(text, rect.x + 10, rect.y + 10, 20, WHITE);
+}
+
+void DrawCalendar(int year, int month, int x_offset, int y_offset) {
+    struct tm time_info = {0};
+    time_info.tm_year = year - 1900;
+    time_info.tm_mon = month - 1;
+    time_info.tm_mday = 1;
+    mktime(&time_info);
+
+    int first_day_of_week = time_info.tm_wday;
+    int days_in_month = (month == 2) ? ((year % 4 == 0 && (year % 100 != 0 || year % 400 == 0)) ? 29 : 28) : 
+                         (month == 4 || month == 6 || month == 9 || month == 11) ? 30 : 31;
+
+    // Month Title
+    const char *month_names[] = {
+        "January", "February", "March", "April", "May", "June",
+        "July", "August", "September", "October", "November", "December"
+    };
+    DrawText(TextFormat("%s %d", month_names[month - 1], year), x_offset + 100, y_offset - 40, 25, BLACK);
+
+    const char *days_of_week[] = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
+    for (int i = 0; i < 7; i++) {
+        DrawText(days_of_week[i], x_offset + i * 50 + 10, y_offset, 20, BLACK);
+    }
+
+    for (int day = 1; day <= days_in_month; day++) {
+        int row = (first_day_of_week + day - 1) / 7;
+        int col = (first_day_of_week + day - 1) % 7;
+        Rectangle day_rect = {x_offset + col * 50, y_offset + 30 + row * 50, 50, 50};
+
+        if (selected_day == day) {
+            DrawRectangleRec(day_rect, LIGHTGREEN);
+        }
+        DrawRectangleLines(day_rect.x, day_rect.y, day_rect.width, day_rect.height, BLACK);
+        DrawText(TextFormat("%d", day), day_rect.x + 15, day_rect.y + 15, 20, BLACK);
+
+        if (CheckCollisionPointRec(GetMousePosition(), day_rect) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+            selected_day = day;
+        }
+    }
+}
+
+void SavePeriodData() {
+    FILE *file = fopen("data.txt", "a");
+    if (file == NULL) {
+        printf("Error opening file!\n");
         return;
     }
 
-    char next_period[20], fertile_start[20], fertile_end[20];
-    calculate_next_period(last_period, cycle_length, next_period);
-    calculate_fertile_window(next_period, fertile_start, fertile_end);
+    time_t now = time(NULL);
+    struct tm *t = localtime(&now);
 
-    gtk_label_set_text(GTK_LABEL(label_next_period), next_period);
-    gtk_label_set_text(GTK_LABEL(label_fertile_window), fertile_start);
+    char logged_at[30];
+    strftime(logged_at, sizeof(logged_at), "%Y-%m-%d %H:%M:%S", t);
 
-    char cycle_data[100];
-    snprintf(cycle_data, sizeof(cycle_data), "Last Period: %s, Cycle Length: %d, Next Period: %s", last_period, cycle_length, next_period);
-    save_cycle_data("cycle_data.txt", cycle_data);
-}
+    char last_period_date[15];
+    snprintf(last_period_date, sizeof(last_period_date), "%04d-%02d-%02d", currentYear, currentMonth, selected_day);
 
-// Function to handle "View History" button
-void on_view_history_clicked(GtkWidget *widget, gpointer data) {
-    char buffer[1024] = {0};
-    load_cycle_data("cycle_data.txt", buffer, sizeof(buffer));
-    GtkTextBuffer *text_buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(text_view_history));
-    gtk_text_buffer_set_text(text_buffer, buffer, -1);
-}
-
-// Function to create UI
-void create_ui() 
-{
-    window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-    gtk_window_set_title(GTK_WINDOW(window), "Period Tracker");
-    gtk_container_set_border_width(GTK_CONTAINER(window), 10);
-    gtk_window_set_default_size(GTK_WINDOW(window), 400, 300);
-
-    GtkWidget *grid = gtk_grid_new();
-    gtk_container_add(GTK_CONTAINER(window), grid);
-    
-    GtkWidget *label1 = gtk_label_new("Select Last Period:");
-    calendar = gtk_calendar_new();
-    
-    GtkWidget *label2 = gtk_label_new("Cycle Length (days):");
-    entry_cycle_length = gtk_entry_new();
-    
-    GtkWidget *button_Log_period = gtk_button_new_with_label("Log period");
-    g_signal_connect(button_Log_period, "clicked", G_CALLBACK(on_Log_period_clicked), NULL);
-    
-    GtkWidget *button_history = gtk_button_new_with_label("View History");
-    g_signal_connect(button_history, "clicked", G_CALLBACK(on_view_history_clicked), NULL);
-    
-    label_next_period = gtk_label_new("Next period date: ");
-    label_fertile_window = gtk_label_new("Fertile window: ");
-    
-    text_view_history = gtk_text_view_new();
-    gtk_text_view_set_editable(GTK_TEXT_VIEW(text_view_history), FALSE);
-    GtkWidget *scroll = gtk_scrolled_window_new(NULL, NULL);
-    gtk_container_add(GTK_CONTAINER(scroll), text_view_history);
-    gtk_widget_set_size_request(scroll, 350, 100);
-    
-    // Adding widgets to grid
-    gtk_grid_attach(GTK_GRID(grid), label1, 0, 0, 1, 1);
-    gtk_grid_attach(GTK_GRID(grid), calendar, 1, 0, 1, 1);
-    gtk_grid_attach(GTK_GRID(grid), label2, 0, 1, 1, 1);
-    gtk_grid_attach(GTK_GRID(grid), entry_cycle_length, 1, 1, 1, 1);
-    gtk_grid_attach(GTK_GRID(grid), button_Log_period, 0, 2, 2, 1);
-    gtk_grid_attach(GTK_GRID(grid), label_next_period, 0, 3, 2, 1);
-    gtk_grid_attach(GTK_GRID(grid), label_fertile_window, 0, 4, 2, 1);
-    gtk_grid_attach(GTK_GRID(grid), button_history, 0, 5, 2, 1);
-    gtk_grid_attach(GTK_GRID(grid), scroll, 0, 6, 2, 1);
-
-    g_signal_connect(window, "destroy", G_CALLBACK(gtk_main_quit), NULL);
-    gtk_widget_show_all(window);
-}
-
-//log in ko lagi
-void on_login_clicked(GtkWidget *widget, gpointer data) {
-    const char *username = gtk_entry_get_text(GTK_ENTRY(username_entry));
-    const char *password = gtk_entry_get_text(GTK_ENTRY(password_entry));
-
-    if (authenticate((char *)username, (char *)password)) {
-        gtk_label_set_text(GTK_LABEL(data), "Login Successful! Welcome to TrackHer.");
-        create_ui(); // Launch UI
-
+    if (selected_day != -1 && strlen(cycle_length_textbox.text) > 0) {
+        fprintf(file, "Last Period: %s, Cycle Length: %s, Logged at: %s\n", 
+                last_period_date, cycle_length_textbox.text, logged_at);
+        printf("Data Saved: Last Period: %s, Cycle Length: %s, Logged at: %s\n", 
+                last_period_date, cycle_length_textbox.text, logged_at);
     } else {
-        gtk_label_set_text(GTK_LABEL(data), "Invalid username or password.");
+        printf("No day selected or cycle length empty.\n");
+    }
+
+    fclose(file);
+}
+
+void DrawPeriodTrackerUI() {
+    int calendar_x = 50, calendar_y = 70;
+    int calendar_width = 7 * 50;
+    int textbox_width = 200;
+    int button_width = 200;
+
+    // Month Navigation Buttons
+    Rectangle prev_button = {calendar_x, calendar_y - 40, 120, 30};
+    Rectangle next_button = {calendar_x + calendar_width - 120, calendar_y - 40, 120, 30};
+    DrawButton(prev_button, "< Prev Month");
+    DrawButton(next_button, "Next Month >");
+
+    if (CheckCollisionPointRec(GetMousePosition(), prev_button) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+        currentMonth--;
+        if (currentMonth < 1) {
+            currentMonth = 12;
+            currentYear--;
+        }
+    }
+
+    if (CheckCollisionPointRec(GetMousePosition(), next_button) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+        currentMonth++;
+        if (currentMonth > 12) {
+            currentMonth = 1;
+            currentYear++;
+        }
+    }
+
+    // Draw Calendar
+    DrawCalendar(currentYear, currentMonth, calendar_x, calendar_y);
+
+    // Textbox
+    int textbox_x = calendar_x + (calendar_width - textbox_width) / 2;
+    int textbox_y = calendar_y + 280;
+    int button_x = calendar_x + (calendar_width - button_width) / 2;
+    int button_y = textbox_y + 50;
+
+    cycle_length_textbox.bounds = (Rectangle){textbox_x, textbox_y, textbox_width, 30};
+    DrawTextBox(&cycle_length_textbox);
+
+    if (CheckCollisionPointRec(GetMousePosition(), cycle_length_textbox.bounds) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+        cycle_length_textbox.is_active = true;
+    }
+
+    HandleTextBoxInput(&cycle_length_textbox);
+
+    // Log Period Button
+    Rectangle log_period_button = {button_x, button_y, button_width, 40};
+    DrawButton(log_period_button, "Log Period");
+
+    if (CheckCollisionPointRec(GetMousePosition(), log_period_button) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+        SavePeriodData();
     }
 }
-
-void on_signup_clicked(GtkWidget *widget, gpointer data) {
-    signup(); // Calls the signup function from login.c
-    gtk_label_set_text(GTK_LABEL(data), "Signup Completed! Please login.");
-}
-
-void show_login_window() 
-{
-    // Create window
-    window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-    gtk_window_set_title(GTK_WINDOW(window), "TrackHer Login");
-    gtk_window_set_default_size(GTK_WINDOW(window), 400, 300);
-    g_signal_connect(window, "destroy", G_CALLBACK(gtk_main_quit), NULL);
-
-    // Create a grid layout
-    GtkWidget *grid = gtk_grid_new();
-    gtk_container_add(GTK_CONTAINER(window), grid);
-
-    // Username label & entry
-    GtkWidget *username_label = gtk_label_new("Username:");
-    username_entry = gtk_entry_new();
-    gtk_grid_attach(GTK_GRID(grid), username_label, 0, 0, 1, 1);
-    gtk_grid_attach(GTK_GRID(grid), username_entry, 1, 0, 1, 1);
-
-    // Password label & entry
-    GtkWidget *password_label = gtk_label_new("Password:");
-    password_entry = gtk_entry_new();
-    gtk_entry_set_visibility(GTK_ENTRY(password_entry), FALSE); // Hide password
-    gtk_grid_attach(GTK_GRID(grid), password_label, 0, 1, 1, 1);
-    gtk_grid_attach(GTK_GRID(grid), password_entry, 1, 1, 1, 1);
-
-    // Status label
-    GtkWidget *status_label = gtk_label_new("");
-
-    // Login button
-    GtkWidget *login_button = gtk_button_new_with_label("Login");
-    g_signal_connect(login_button, "clicked", G_CALLBACK(on_login_clicked), status_label);
-    gtk_grid_attach(GTK_GRID(grid), login_button, 0, 2, 2, 1);
-
-    // Signup button
-    GtkWidget *signup_button = gtk_button_new_with_label("Signup");
-    g_signal_connect(signup_button, "clicked", G_CALLBACK(on_signup_clicked), status_label);
-    gtk_grid_attach(GTK_GRID(grid), signup_button, 0, 3, 2, 1);
-
-    // Attach status label
-    gtk_grid_attach(GTK_GRID(grid), status_label, 0, 4, 2, 1);
-
-    // Show everything
-    gtk_widget_show_all(window);
-}
-
-
