@@ -17,6 +17,6 @@ void load_cycle_data(const char *filename, char *buffer, size_t buffer_size);
 int load_last_period(const char *filename, char *buffer, size_t buffer_size);
 int average_cycle_length(const char *filename);
 int days_until_next_period(const char *today_str, const char *next_period_str);
-FertilityStatus calculate_fertility_status(const char *today_str, const char *next_period_str);
+FertilityStatus calculate_fertility_status(const char *today_str, const char *next_period_str,int avg_cycle_length);
 
 #endif

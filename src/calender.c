@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include "page2_choice.h"
+#include "page_choice.h"
 
 extern ScreenType currentScreen;
 
@@ -64,6 +64,7 @@ void back_DrawButton(Rectangle rect, const char *text) {
     DrawText(text, rect.x + 10, rect.y + 10, 20, WHITE);
 }
 
+
 void DrawCalendar(int year, int month, int x_offset, int y_offset) {
     struct tm time_info = {0};
     time_info.tm_year = year - 1900;
@@ -105,7 +106,7 @@ void DrawCalendar(int year, int month, int x_offset, int y_offset) {
 }
 
 void SavePeriodData() {
-    FILE *file = fopen("data.txt", "a");
+    FILE *file = fopen("../data/data.txt", "a");
     if (file == NULL) {
         printf("Error opening file!\n");
         return;
@@ -133,41 +134,44 @@ void SavePeriodData() {
 }
 
 void DrawPeriodTrackerUI() {
-    int calendar_x = 50, calendar_y = 70;
+    int calendar_x = 200, calendar_y = 100;
     int calendar_width = 7 * 50;
     int textbox_width = 200;
     int button_width = 200;
 
-    // Month Navigation Buttons
-    Rectangle prev_button = {calendar_x, calendar_y - 40, 120, 30};
-    Rectangle next_button = {calendar_x + calendar_width - 120, calendar_y - 40, 120, 30};
-    DrawButton(prev_button, "< Prev Month");
-    DrawButton(next_button, "Next Month >");
-
-    if (CheckCollisionPointRec(GetMousePosition(), prev_button) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
-        currentMonth--;
-        if (currentMonth < 1) {
-            currentMonth = 12;
-            currentYear--;
+        // Month Navigation Buttons
+        Rectangle prev_button = {calendar_x, calendar_y - 40, 120, 30};
+        Rectangle next_button = {calendar_x + calendar_width - 120, calendar_y - 40, 120, 30};
+        DrawButton(prev_button, "< Prev Month");
+        DrawButton(next_button, "Next Month >");
+    
+        if (CheckCollisionPointRec(GetMousePosition(), prev_button) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+            currentMonth--;
+            if (currentMonth < 1) {
+                currentMonth = 12;
+                currentYear--;
+            }
         }
-    }
-
-    if (CheckCollisionPointRec(GetMousePosition(), next_button) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
-        currentMonth++;
-        if (currentMonth > 12) {
-            currentMonth = 1;
-            currentYear++;
+    
+        if (CheckCollisionPointRec(GetMousePosition(), next_button) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+            currentMonth++;
+            if (currentMonth > 12) {
+                currentMonth = 1;
+                currentYear++;
+            }
         }
-    }
-
+        
     // Draw Calendar
     DrawCalendar(currentYear, currentMonth, calendar_x, calendar_y);
 
-    // Textbox
+    // Add space between calendar and input box
     int textbox_x = calendar_x + (calendar_width - textbox_width) / 2;
-    int textbox_y = calendar_y + 280;
+    int textbox_y = calendar_y + 350;
     int button_x = calendar_x + (calendar_width - button_width) / 2;
     int button_y = textbox_y + 50;
+
+    // Label for input box
+    DrawText("Enter your previous cycle length:", textbox_x - 40, textbox_y - 30, 20, BLACK);
 
     cycle_length_textbox.bounds = (Rectangle){textbox_x, textbox_y, textbox_width, 30};
     DrawTextBox(&cycle_length_textbox);

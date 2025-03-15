@@ -2,10 +2,10 @@
 #include <string.h>
 #include <time.h>
 #include "raylib.h"
-#include "ui.h"
+#include "calender.h"
 #include "backend.h"
-#include "page2_choice.h"
-#include "page3_insights.h"  // Include the header file where Draw_Insight() is declared
+#include "page_choice.h"
+#include "page_insight.h"  // Include the header file where Draw_Insight() is declared
 
 #define SCREEN_WIDTH 800 
 #define SCREEN_HEIGHT 600
@@ -16,7 +16,6 @@ int fertility_percentage = 0;
 char fertility_label[16] = "";
 bool insightsCalculated = false;
 
-
 ScreenType currentScreen = PAGE2;
 
 // Function declaration
@@ -25,8 +24,8 @@ void work_choice(void);
 void work_choice(void) {
     InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Choice AVATAR");
 
-    Texture2D insightIcon = LoadTexture("insight.png");
-    Texture2D avatarIcon = LoadTexture("avatar.png");
+    Texture2D insightIcon = LoadTexture("../images/insight.png");
+    Texture2D avatarIcon = LoadTexture("../images/avatar.png");
 
     SetTargetFPS(60);
 
@@ -37,33 +36,32 @@ void work_choice(void) {
         if (currentScreen == PAGE2) {
             // Layout
             int iconSpacing = 20;
-            int textOffset = 60;
+            int textOffset = 40;
+            int iconY = SCREEN_HEIGHT / 2 - 80;  // Move icons slightly upward
 
             DrawText("What do you want to explore today?", 
-                     SCREEN_WIDTH / 2 - MeasureText("What do you want to explore today?", 15) / 2,
-                     SCREEN_HEIGHT / 2 + 160, 15, DARKBROWN);
+                     SCREEN_WIDTH / 2 - MeasureText("What do you want to explore today?", 20) / 2,
+                     SCREEN_HEIGHT / 2 + 120, 20, DARKBROWN);
 
             // Insight icon
             int insightX = SCREEN_WIDTH / 4 - insightIcon.width / 2;
-            int insightY = SCREEN_HEIGHT / 2 - 50;
-            DrawTexture(insightIcon, insightX, insightY, WHITE);
+            DrawTexture(insightIcon, insightX, iconY, WHITE);
             DrawText("insight", insightX + insightIcon.width / 2 - 20, 
-                     insightY + insightIcon.height + iconSpacing + textOffset, 25, DARKBROWN);
+                     iconY + insightIcon.height + iconSpacing + textOffset, 25, DARKBROWN);
 
             // Avatar icon
             int avatarX = (SCREEN_WIDTH * 3) / 4 - avatarIcon.width / 2;
-            int avatarY = SCREEN_HEIGHT / 2 - 50;
-            DrawTexture(avatarIcon, avatarX, avatarY, WHITE);
+            DrawTexture(avatarIcon, avatarX, iconY, WHITE);
             DrawText("me", avatarX + avatarIcon.width / 2 - 10,
-                     avatarY + avatarIcon.height + iconSpacing + textOffset, 25, DARKBROWN);
+                     iconY + avatarIcon.height + iconSpacing + textOffset, 25, DARKBROWN);
 
             // Click handlers
-            Rectangle avatarButtonRect = { avatarX, avatarY, avatarIcon.width, avatarIcon.height };
+            Rectangle avatarButtonRect = { avatarX, iconY, avatarIcon.width, avatarIcon.height };
             if (CheckCollisionPointRec(GetMousePosition(), avatarButtonRect) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
                 currentScreen = AVATAR;
             }
 
-            Rectangle insightButtonRect = { insightX, insightY, insightIcon.width, insightIcon.height };
+            Rectangle insightButtonRect = { insightX, iconY, insightIcon.width, insightIcon.height };
             if (CheckCollisionPointRec(GetMousePosition(), insightButtonRect) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
                 currentScreen = INSIGHT;
             }
@@ -86,22 +84,21 @@ void work_choice(void) {
                 strftime(today_str, sizeof(today_str), "%Y-%m-%d", &today);
 
                 // Load last period
-                if (!load_last_period("data.txt", last_period, sizeof(last_period))) {
+                if (!load_last_period("../data/data.txt", last_period, sizeof(last_period))) {
                     printf("Error loading last period\n");
                     strcpy(last_period, today_str);  // fallback
                 }
 
                 // Get average cycle and next period
-                cycle_length = average_cycle_length("data.txt");
+                cycle_length = average_cycle_length("../data/data.txt");
                 calculate_next_period(last_period, cycle_length, next_period_str);
 
                 // Get insights
                 days_left = days_until_next_period(today_str, next_period_str);
 
-                FertilityStatus status = calculate_fertility_status(today_str, next_period_str);
+                FertilityStatus status = calculate_fertility_status(today_str, next_period_str,cycle_length);
                 fertility_percentage = status.percentage;
                 strcpy(fertility_label, status.label);
-
 
                 // Debug print
                 printf("Last Period: %s\n", last_period);

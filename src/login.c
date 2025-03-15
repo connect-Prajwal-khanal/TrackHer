@@ -70,7 +70,7 @@ void signup() {
 
     if (strcmp(user.password, password2) == 0) {
         generateUsername(user.email, user.username);
-        fp = fopen("Users.dat", "a+");
+        fp = fopen("../data/Users.dat", "a+");
         fwrite(&user, sizeof(struct user), 1, fp);
         printf("\nUser registration successful! Your username is %s\n", user.username);
         fclose(fp);
@@ -84,7 +84,7 @@ int authenticate(char username[50], char password[50]) {
     FILE *fp;
     struct user usr;
 
-    fp = fopen("Users.dat", "r");
+    fp = fopen("../data/Users.dat", "r");
     if (!fp) {
         printf("\nError: Unable to open user database.\n");
         return 0;

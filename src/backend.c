@@ -6,7 +6,7 @@
 #include <time.h>
 #include <math.h>
 #include "backend.h"
-#include "ui.h"
+#include "calender.h"
 
 char *strptime(const char *s, const char *format, struct tm *tm) {
     sscanf(s, "%d-%d-%d", &tm->tm_year, &tm->tm_mon, &tm->tm_mday);
@@ -143,72 +143,61 @@ void load_cycle_data(const char *filename, char *buffer, size_t buffer_size) {
         perror("Error opening file");
     }
 }
-
-FertilityStatus calculate_fertility_status(const char *today_str, const char *next_period_str) {
-    struct tm today_tm = {0}, next_tm = {0};
+FertilityStatus calculate_fertility_status(const char *today_str, const char *last_period_str, int avg_cycle_length) {
+    struct tm today_tm = {0}, last_period_tm = {0};
     strptime(today_str, "%Y-%m-%d", &today_tm);
-    strptime(next_period_str, "%Y-%m-%d", &next_tm);
+    strptime(last_period_str, "%Y-%m-%d", &last_period_tm);
 
     time_t t_today = mktime(&today_tm);
-    time_t t_next = mktime(&next_tm);
+    time_t t_last = mktime(&last_period_tm);
+    
+    int cycle_day = (int)((t_today - t_last) / (60 * 60 * 24)) + 1;
+    if (cycle_day > avg_cycle_length || cycle_day < 1)
+        cycle_day = 1; // Reset to start if out of bounds
 
-    // Calculate ovulation day and fertile window
-    time_t ovulation = t_next - (14 * 24 * 60 * 60);
-    time_t fertile_start = ovulation - (4 * 24 * 60 * 60); // 5 days before ovulation
-    time_t fertile_end = ovulation + (1 * 24 * 60 * 60);   // 1 day after ovulation
+    int fertility_percentage = 0;
+    const char *label = "Not Fertile";
 
-    FertilityStatus status = {0, "Not Fertile"};
+    // Map day to fertility percentage based on biological curve
+    if (cycle_day >= 1 && cycle_day <= 5)
+        fertility_percentage = 0;  // Menstrual Phase
+    else if (cycle_day >= 6 && cycle_day <= 9)
+        fertility_percentage = 10 + (cycle_day - 6) * 7;  // Slowly rising
+    else if (cycle_day == 10)
+        fertility_percentage = 40;
+    else if (cycle_day == 11)
+        fertility_percentage = 55;
+    else if (cycle_day == 12)
+        fertility_percentage = 70;
+    else if (cycle_day == 13)
+        fertility_percentage = 85;
+    else if (cycle_day == 14)
+        fertility_percentage = 100; // Ovulation Peak
+    else if (cycle_day == 15)
+        fertility_percentage = 80;
+    else if (cycle_day == 16)
+        fertility_percentage = 60;
+    else if (cycle_day == 17)
+        fertility_percentage = 40;
+    else if (cycle_day == 18)
+        fertility_percentage = 20;
+    else if (cycle_day >= 19 && cycle_day <= avg_cycle_length)
+        fertility_percentage = 10; // Luteal Phase — low fertility
 
-    if (t_today >= fertile_start && t_today <= fertile_end) {
-        int days_from_start = (int)((t_today - fertile_start) / (60 * 60 * 24));
+    // Assign label
+    if (fertility_percentage >= 80)
+        label = "High";
+    else if (fertility_percentage >= 50)
+        label = "Moderate";
+    else if (fertility_percentage >= 20)
+        label = "Low";
+    else
+        label = "Very Low";
 
-        // Fertility curve across fertile window days (index 0-5)
-        int fertility_curve[] = {40, 60, 80, 100, 70, 50};
-        int percentage = fertility_curve[days_from_start];
-        const char *label;
-
-        // Assign label based on percentage
-        if (percentage >= 80)
-            label = "High";
-        else if (percentage >= 60)
-            label = "Moderate";
-        else if (percentage >= 40)
-            label = "Low";
-        else
-            label = "Very Low";
-
-        status.percentage = percentage;
-        status.label = label;
-    }
-
+    FertilityStatus status = { fertility_percentage, label };
     return status;
 }
 
-// int calculate_fertility_percentage(const char *today_str, const char *next_period_str) {
-//     struct tm today_tm = {0}, next_tm = {0};
-//     strptime(today_str, "%Y-%m-%d", &today_tm);
-//     strptime(next_period_str, "%Y-%m-%d", &next_tm);
-
-//     time_t t_today = mktime(&today_tm);
-//     time_t t_next = mktime(&next_tm);
-
-//     // Calculate fertile window
-//     time_t ovulation = t_next - (14 * 24 * 60 * 60); // Ovulation day
-//     time_t fertile_start = ovulation - (4 * 24 * 60 * 60); // 5 days before ovulation
-//     time_t fertile_end = ovulation + (1 * 24 * 60 * 60);   // 1 day after ovulation
-
-//     // Assign fertility percentage
-//     if (t_today >= fertile_start && t_today <= fertile_end) {
-//         // During fertile window
-//         int days_from_start = (t_today - fertile_start) / (60 * 60 * 24);
-//         // Peak fertility on ovulation day (4th day of window), use a simple curve
-//         int fertility[] = {40, 60, 80, 100, 70, 50}; // example curve
-//         return fertility[days_from_start];
-//     } else {
-//         // Outside fertile window
-//         return 0;
-//     }
-// }
 
 int days_until_next_period(const char *today_str, const char *next_period_str) {
     struct tm today = {0}, next_period = {0};

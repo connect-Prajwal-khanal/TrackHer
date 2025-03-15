@@ -3,7 +3,7 @@
 #include <string.h>
 #include "login.h"  // Include login-related functions
 #include "backend.h" // Include backend-related functions
-#include "page2_choice.h" // Include page2-related functions
+#include "page_choice.h" // Include page2-related functions
 
 #define MAX_INPUT_CHARS 50
 
@@ -182,22 +182,7 @@ void draw_login_screen() {
 }
 
 int main() {
-
-    // Get today's date
-    time_t t = time(NULL);
-    struct tm today = *localtime(&t);
-    strftime(today_str, sizeof(today_str), "%Y-%m-%d", &today);
-
-    // Load from file
-    load_last_period("data.txt", last_period, sizeof(last_period));
-    cycle_length = average_cycle_length("data.txt");
-
-    // Calculate next period
-    calculate_next_period(last_period, cycle_length, next_period);
-
-    // Fertile Window
-    calculate_fertile_window(next_period, fertile_start, fertile_end);
-
+    
     draw_login_screen();  // Call the function to handle login/signup screen drawing and interactions
     return 0;
 }
