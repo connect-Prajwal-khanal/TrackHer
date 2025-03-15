@@ -8,6 +8,10 @@
 
 #define SCREEN_WIDTH 850
 
+int days_left =0;
+int fertility_percentage ;
+char fertility_label[16] = "";
+
 extern ScreenType currentScreen;
 
 
@@ -38,8 +42,36 @@ void Draw_CycleLengthChart() {
     DrawText("Last 6 Cycle Length (Days)", chart_x, chart_y + 40, 18, BROWN);
 }
 
-void Draw_Insight(int days_left, int fertility_percentage, const char *fertility_label) {
+void Draw_Insight() {
     ClearBackground((Color){252, 243, 207, 255});
+
+
+    char last_period[20];
+                char today_str[20];
+                char next_period_str[20];
+                int cycle_length = 0;
+
+                // Get today's date
+                time_t t = time(NULL);
+                struct tm today = *localtime(&t);
+                strftime(today_str, sizeof(today_str), "%Y-%m-%d", &today);
+
+                // Load last period
+                if (!load_last_period("../data/data.txt", last_period, sizeof(last_period))) {
+                    printf("Error loading last period\n");
+                    strcpy(last_period, today_str);  // fallback
+                }
+
+                // Get average cycle and next period
+                cycle_length = average_cycle_length("../data/data.txt");
+                calculate_next_period(last_period, cycle_length, next_period_str);
+
+                // Get insights
+                days_left = days_until_next_period(today_str, next_period_str);
+
+                FertilityStatus status = calculate_fertility_status(today_str, last_period,cycle_length);
+                fertility_percentage = status.percentage;
+                strcpy(fertility_label, status.label);
 
     // Tabs
     Rectangle tab1 = {120, 150, 150, 40};
@@ -118,6 +150,31 @@ void Draw_Insight(int days_left, int fertility_percentage, const char *fertility
             char buffer[32];
             snprintf(buffer, sizeof(buffer), "%d%%", fertility_percentage);
             DrawText(buffer, 635, 290, 14, DARKBROWN);
+
+        // Debug
+        DrawRectangleRounded((Rectangle){100, 350, 650, 180}, 0.2f, 10, (Color){255, 228, 196, 255}); // Beige block
+        DrawText("Debug Info (for Testing)", 120, 370, 20, DARKBROWN);
+
+        char infoBuffer[128];
+
+        snprintf(infoBuffer, sizeof(infoBuffer), "Next Period: %s", next_period_str);
+        DrawText(infoBuffer, 120, 400, 18, DARKBROWN);
+
+        snprintf(infoBuffer, sizeof(infoBuffer), "Average Cycle Length: %d", cycle_length);
+        DrawText(infoBuffer, 120, 425, 18, DARKBROWN);
+
+        snprintf(infoBuffer, sizeof(infoBuffer), "Last Period: %s", last_period);
+        DrawText(infoBuffer, 120, 450, 18, DARKBROWN);
+
+        snprintf(infoBuffer, sizeof(infoBuffer), "Today: %s", today_str);
+        DrawText(infoBuffer, 400, 400, 18, DARKBROWN);
+
+        snprintf(infoBuffer, sizeof(infoBuffer), "Days Left: %d", days_left);
+        DrawText(infoBuffer, 400, 425, 18, DARKBROWN);
+
+        snprintf(infoBuffer, sizeof(infoBuffer), "Fertility: %d%%, Label: %s", fertility_percentage, fertility_label);
+        DrawText(infoBuffer, 400, 450, 18, DARKBROWN);
+
         }
 
         else if (selectedTab == 2) {

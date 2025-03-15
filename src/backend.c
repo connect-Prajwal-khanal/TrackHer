@@ -143,6 +143,7 @@ void load_cycle_data(const char *filename, char *buffer, size_t buffer_size) {
         perror("Error opening file");
     }
 }
+
 FertilityStatus calculate_fertility_status(const char *today_str, const char *last_period_str, int avg_cycle_length) {
     struct tm today_tm = {0}, last_period_tm = {0};
     strptime(today_str, "%Y-%m-%d", &today_tm);
