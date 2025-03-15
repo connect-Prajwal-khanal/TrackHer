@@ -1,6 +1,0 @@
- if (!save_cycle_data(FILENAME, log_entry)) 
-                {  // Modify `save_cycle_data` to return success/failure
-                    printf("Error: Could not save period data. Please try again.\n");
-                    return 2;
-                } 
-
