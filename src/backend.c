@@ -19,13 +19,13 @@ char *strptime(const char *s, const char *format, struct tm *tm) {
 void calculate_next_period(const char *last_period, int cycle_length, char *next_period) {
     struct tm tm = {0};
 
-    // Parse the last period date (format: YYYY-MM-DD)
+    // Parse the last period date (YYYY-MM-DD)
     if (strptime(last_period, "%Y-%m-%d", &tm) == NULL) {
         printf("Error: Invalid date format for last period.\n");
         return;
     }
 
-    // Add cycle length to day field
+    // Add cycle length 
     tm.tm_mday += cycle_length;
 
     // Normalize the date (adjust month/year if needed)
@@ -56,8 +56,7 @@ void calculate_fertile_window(const char *next_period, char *fertile_start, char
     strftime(fertile_end, 11, "%Y-%m-%d", &tm); // Format fertile end date
 }
 
-
-
+// to load last period date in format (YYYY-M-DD)
 int load_last_period(const char *filename, char *buffer, size_t buffer_size) {
     FILE *file = fopen(filename, "r");
     if (!file) {
@@ -65,7 +64,7 @@ int load_last_period(const char *filename, char *buffer, size_t buffer_size) {
         return 0;
     }
 
-    char temp[256];  // Temporary buffer
+    char temp[256];  // Temp
     char last_line[256] = "";
 
     // Read through each line to find the last entry
@@ -133,17 +132,6 @@ int average_cycle_length(const char *filename)
     return count > 0 ? sum / count : 0;
 }
 
-// Function to load cycle data from a file
-void load_cycle_data(const char *filename, char *buffer, size_t buffer_size) {
-    FILE *file = fopen(filename, "r");
-    if (file) {
-        fread(buffer, sizeof(char), buffer_size, file);
-        fclose(file);
-    } else {
-        perror("Error opening file");
-    }
-}
-
 FertilityStatus calculate_fertility_status(const char *today_str, const char *last_period_str, int avg_cycle_length) {
     struct tm today_tm = {0}, last_period_tm = {0};
     strptime(today_str, "%Y-%m-%d", &today_tm);
@@ -198,7 +186,6 @@ FertilityStatus calculate_fertility_status(const char *today_str, const char *la
     FertilityStatus status = { fertility_percentage, label };
     return status;
 }
-
 
 int days_until_next_period(const char *today_str, const char *next_period_str) {
     struct tm today = {0}, next_period = {0};

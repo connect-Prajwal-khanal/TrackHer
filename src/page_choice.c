@@ -19,7 +19,7 @@ ScreenType currentScreen = PAGE2;
 void work_choice(void);
 
 void work_choice(void) {
-    InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Choice AVATAR");
+    InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "TrackHer");
 
     Texture2D insightIcon = LoadTexture("../images/insight.png");
     Texture2D avatarIcon = LoadTexture("../images/avatar.png");
@@ -38,7 +38,7 @@ void work_choice(void) {
 
             DrawText("What do you want to explore today?", 
                      SCREEN_WIDTH / 2 - MeasureText("What do you want to explore today?", 20) / 2,
-                     SCREEN_HEIGHT / 2 + 120, 20, DARKBROWN);
+                     SCREEN_HEIGHT / 1.5 + 120, 20, DARKBROWN);
 
             // Insight icon
             int insightX = SCREEN_WIDTH / 4 - insightIcon.width / 2;

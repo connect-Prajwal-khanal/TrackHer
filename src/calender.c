@@ -140,8 +140,8 @@ void DrawPeriodTrackerUI() {
     int button_width = 200;
 
         // Month Navigation Buttons
-        Rectangle prev_button = {calendar_x, calendar_y - 40, 120, 30};
-        Rectangle next_button = {calendar_x + calendar_width - 120, calendar_y - 40, 120, 30};
+        Rectangle prev_button = {calendar_x - 75, calendar_y - 65, 120, 30};
+        Rectangle next_button = {calendar_x + 75 + calendar_width - 120, calendar_y - 65, 120, 30};
         DrawButton(prev_button, "< Prev Month");
         DrawButton(next_button, "Next Month >");
     
@@ -166,7 +166,7 @@ void DrawPeriodTrackerUI() {
 
     // Add space between calendar and input box
     int textbox_x = calendar_x + (calendar_width - textbox_width) / 2;
-    int textbox_y = calendar_y + 350;
+    int textbox_y = calendar_y + 375;
     int button_x = calendar_x + (calendar_width - button_width) / 2;
     int button_y = textbox_y + 50;
 

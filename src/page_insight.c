@@ -46,11 +46,13 @@ void Draw_Insight() {
     ClearBackground((Color){252, 243, 207, 255});
 
 
-    char last_period[20];
+                char last_period[20];
                 char today_str[20];
                 char next_period_str[20];
                 int cycle_length = 0;
-
+                char fertile_start[20];
+                char fertile_end[20];
+                
                 // Get today's date
                 time_t t = time(NULL);
                 struct tm today = *localtime(&t);
@@ -72,6 +74,8 @@ void Draw_Insight() {
                 FertilityStatus status = calculate_fertility_status(today_str, last_period,cycle_length);
                 fertility_percentage = status.percentage;
                 strcpy(fertility_label, status.label);
+
+                calculate_fertile_window(next_period_str, fertile_start,fertile_end);
 
     // Tabs
     Rectangle tab1 = {120, 150, 150, 40};
@@ -151,29 +155,39 @@ void Draw_Insight() {
             snprintf(buffer, sizeof(buffer), "%d%%", fertility_percentage);
             DrawText(buffer, 635, 290, 14, DARKBROWN);
 
-        // Debug
+       
         DrawRectangleRounded((Rectangle){100, 350, 650, 180}, 0.2f, 10, (Color){255, 228, 196, 255}); // Beige block
-        DrawText("Debug Info (for Testing)", 120, 370, 20, DARKBROWN);
+        DrawText("Info :", 120, 370, 20, DARKBROWN);
 
         char infoBuffer[128];
 
-        snprintf(infoBuffer, sizeof(infoBuffer), "Next Period: %s", next_period_str);
-        DrawText(infoBuffer, 120, 400, 18, DARKBROWN);
+         // Left Column
+          
+         snprintf(infoBuffer, sizeof(infoBuffer), "Next Period: %s", next_period_str);
+         DrawText(infoBuffer, 120, 400, 18, DARKBROWN);
 
-        snprintf(infoBuffer, sizeof(infoBuffer), "Average Cycle Length: %d", cycle_length);
-        DrawText(infoBuffer, 120, 425, 18, DARKBROWN);
+         snprintf(infoBuffer, sizeof(infoBuffer), "Last Period: %s", last_period);
+         DrawText(infoBuffer, 120, 425, 18, DARKBROWN);
 
-        snprintf(infoBuffer, sizeof(infoBuffer), "Last Period: %s", last_period);
-        DrawText(infoBuffer, 120, 450, 18, DARKBROWN);
+         snprintf(infoBuffer, sizeof(infoBuffer), "Average Cycle Length: %d", cycle_length);
+         DrawText(infoBuffer, 120, 450, 18, DARKBROWN);
 
-        snprintf(infoBuffer, sizeof(infoBuffer), "Today: %s", today_str);
-        DrawText(infoBuffer, 400, 400, 18, DARKBROWN);
+         snprintf(infoBuffer, sizeof(infoBuffer), "Today: %s", today_str);
+         DrawText(infoBuffer, 120, 475, 18, DARKBROWN);
 
-        snprintf(infoBuffer, sizeof(infoBuffer), "Days Left: %d", days_left);
-        DrawText(infoBuffer, 400, 425, 18, DARKBROWN);
+        //right column
 
-        snprintf(infoBuffer, sizeof(infoBuffer), "Fertility: %d%%, Label: %s", fertility_percentage, fertility_label);
-        DrawText(infoBuffer, 400, 450, 18, DARKBROWN);
+        snprintf(infoBuffer, sizeof(infoBuffer), "Fertile Start: %s", fertile_start);
+        DrawText(infoBuffer, 420, 400, 18, DARKBROWN);
+ 
+         snprintf(infoBuffer, sizeof(infoBuffer), "Fertile End: %s", fertile_end);
+         DrawText(infoBuffer, 420, 425, 18, DARKBROWN);
+ 
+         snprintf(infoBuffer, sizeof(infoBuffer), "Days Left: %d", days_left);
+         DrawText(infoBuffer, 420, 450, 18, DARKBROWN);
+ 
+         snprintf(infoBuffer, sizeof(infoBuffer), "Fertility: %d%%, Label: %s", fertility_percentage, fertility_label);
+         DrawText(infoBuffer, 420, 475, 18, DARKBROWN);
 
         }
 
