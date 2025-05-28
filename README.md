@@ -1,17 +1,17 @@
 # TrackHer - Period Tracking Calendar
 
-TrackHer is a lightweight, offline period tracking application developed in **C and GTK**. It helps users track menstrual cycles, predict ovulation, and estimate fertile windows while ensuring **data privacy** with secure **encryption**. 
+TrackHer is a lightweight, offline period tracking application developed in **C and Raylib**. It helps users track menstrual cycles, predict ovulation, and estimate fertile windows while ensuring **data privacy** with secure **encryption**. 
 
 ## 🚀 Features
 - **Menstrual Cycle Tracking** – Log period start dates and symptoms.
 - **Cycle Prediction Algorithm** – Predict next period and fertile window.
 - **Secure Data Storage** – File handling with encryption.
-- **Interactive GTK UI** – User-friendly calendar and visual analytics.
+- **Interactive Raylib UI** – User-friendly calendar and visual analytics.
 - **Offline & Privacy-Focused** – No internet required, local storage only.
 
 ## 💻 Tech Stack
 - **Programming Language:** C
-- **UI Framework:** GTK (for graphical interface)
+- **UI Framework:** Raylib (for graphical interface)
 - **Data Storage:** CSV / JSON file handling
 - **Security:** Basic encryption for user privacy
 
@@ -35,7 +35,7 @@ TrackHer is a lightweight, offline period tracking application developed in **C 
 ### **Prerequisites**
 - **Git** (Optional, for version control)
 - **GCC Compiler**
-- **GTK Development Libraries**
+- **Raylib Development Libraries**
 
 ### **Steps to Install**
 1. **Clone the repository:**
